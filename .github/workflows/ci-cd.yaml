@@ -33,7 +33,12 @@ jobs:
       - name: Update Kustomize Image
         run: |
           IMAGE_TAG=${{ github.sha }}
-          sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          else
+            sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          fi
           git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
           git commit -m "Update image tag to $IMAGE_TAG"
           git push origin ${{ github.ref_name }}
+
