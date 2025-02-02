@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: gitops-express-api-container
-          image: asd2321s2/express-api:dev
+          image: asd2321s2/express-api:4bdaf89798a58b2198e4df9d94bf6ae067bbe105
           resources:
             requests:
               cpu: "100m"
