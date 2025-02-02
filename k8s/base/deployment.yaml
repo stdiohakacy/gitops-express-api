@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-express-api-deployment
+  labels:
+    app: gitops-express-api-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitops-express-api
+  template:
+    metadata:
+      labels:
+        app: gitops-express-api
+    spec:
+      containers:
+        - name: gitops-express-api-container
+          image: asd2321s2/gitops-express-api:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

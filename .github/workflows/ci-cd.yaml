@@ -1,0 +1,32 @@
+name: Deploy to Minikube
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t asd2321s2/gitops-express-api:${{ github.sha }} .
+          docker tag asd2321s2/gitops-express-api:${{ github.sha }} asd2321s2/gitops-express-api:latest
+
+      # - name: Push Docker Image
+      #   run: |
+      #     docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      #     docker push asd2321s2/express-api:${{ github.sha }}
+      #     docker push asd2321s2/express-api:latest
+
+      # - name: Update Kustomize Image
+      #   run: |
+      #     sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:${{ github.sha }}|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+      #     git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+      #     git commit -m "Update image tag to ${{ github.sha }}"
+      #     git push origin ${{ github.ref_name }}

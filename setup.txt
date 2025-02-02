@@ -1,0 +1,20 @@
+1. Start minikube cluster
+  minikube start --cpus=6 --memory=12288 --driver=docker --addons=ingress
+2. Verify cluster
+  kubectl cluster-info
+  kubectl get nodes
+
+3. Install ArgoCD on Minikube
+  kubectl create namespace argocd
+  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+4. Install CLI ArgoCD
+  curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+  chmod +x argocd-linux-amd64
+  sudo mv argocd-linux-amd64 /usr/local/bin/argocd
+
+5. Get password ArgoCD (admin)
+  kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+6. Access ArgoCD UI
+  kubectl port-forward svc/argocd-server -n argocd 8080:443
