@@ -17,14 +17,18 @@ jobs:
       - name: Build Docker Image
         run: |
           IMAGE_TAG=${{ github.sha }}
+          echo "Building image with tag: $IMAGE_TAG"
           docker build -t asd2321s2/gitops-express-api:$IMAGE_TAG .
           docker tag asd2321s2/gitops-express-api:$IMAGE_TAG asd2321s2/gitops-express-api:latest
 
       - name: Push Docker Image
         run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_TAG=${{ github.sha }}
+          echo "Pushing image with tag: $IMAGE_TAG"
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker push asd2321s2/gitops-express-api:$IMAGE_TAG
           docker push asd2321s2/gitops-express-api:latest
+
 
       # - name: Update Kustomize Image
       #   run: |
