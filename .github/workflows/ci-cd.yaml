@@ -30,9 +30,10 @@ jobs:
           docker push asd2321s2/gitops-express-api:latest
 
 
-      # - name: Update Kustomize Image
-      #   run: |
-      #     sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:${{ github.sha }}|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
-      #     git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
-      #     git commit -m "Update image tag to ${{ github.sha }}"
-      #     git push origin ${{ github.ref_name }}
+      - name: Update Kustomize Image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          git commit -m "Update image tag to $IMAGE_TAG"
+          git push origin ${{ github.ref_name }}
