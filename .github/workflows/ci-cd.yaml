@@ -9,20 +9,22 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+    environment: ${{ github.ref_name == 'main' && 'production' || 'develop' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Build Docker Image
         run: |
-          docker build -t asd2321s2/gitops-express-api:${{ github.sha }} .
-          docker tag asd2321s2/gitops-express-api:${{ github.sha }} asd2321s2/gitops-express-api:latest
+          IMAGE_TAG=${{ github.sha }}
+          docker build -t asd2321s2/gitops-express-api:$IMAGE_TAG .
+          docker tag asd2321s2/gitops-express-api:$IMAGE_TAG asd2321s2/gitops-express-api:latest
 
-      # - name: Push Docker Image
-      #   run: |
-      #     docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      #     docker push asd2321s2/express-api:${{ github.sha }}
-      #     docker push asd2321s2/express-api:latest
+      - name: Push Docker Image
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push asd2321s2/gitops-express-api:$IMAGE_TAG
+          docker push asd2321s2/gitops-express-api:latest
 
       # - name: Update Kustomize Image
       #   run: |
