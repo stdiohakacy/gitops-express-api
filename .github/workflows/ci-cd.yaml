@@ -37,6 +37,16 @@ jobs:
     runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'production' || 'develop' }}
     steps:
+
+      - name: Update Kustomize Image Tag
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG -k k8s/overlays/prod
+          else
+            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG -k k8s/overlays/dev
+          fi
+
       - name: Login to ArgoCD
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
@@ -44,13 +54,11 @@ jobs:
             --password ${{ secrets.ARGOCD_PASSWORD }} \
             --insecure
 
-      - name: Deploy with ArgoCD
+      - name: Sync Application with ArgoCD
         run: |
           APP_NAME="gitops-express-api-dev"
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             APP_NAME="gitops-express-api-prod"
           fi
-          IMAGE_TAG=${{ github.sha }}
-          argocd app set $APP_NAME --image asd2321s2/gitops-express-api:$IMAGE_TAG
           argocd app sync $APP_NAME
           argocd app wait $APP_NAME --health --sync
