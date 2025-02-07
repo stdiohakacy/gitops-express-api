@@ -67,6 +67,8 @@ jobs:
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
             --insecure
 
       # - name: Login to ArgoCD
