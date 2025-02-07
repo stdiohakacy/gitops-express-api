@@ -6,53 +6,49 @@ on:
       - develop
       - main
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  deploy:
+  build:
     runs-on: self-hosted
-    environment: ${{ github.ref_name == 'main' && 'production' || 'develop' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build Docker Image
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
         run: |
           IMAGE_TAG=${{ github.sha }}
-          echo "Building image with tag: $IMAGE_TAG"
           docker build -t asd2321s2/gitops-express-api:$IMAGE_TAG .
-          docker tag asd2321s2/gitops-express-api:$IMAGE_TAG asd2321s2/gitops-express-api:latest
-
-      - name: Push Docker Image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          echo "Pushing image with tag: $IMAGE_TAG"
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker tag asd2321s2/gitops-express-api:$IMAGE_TAG asd2321s2/gitops-express-api:v1.0.${{ github.run_number }}
           docker push asd2321s2/gitops-express-api:$IMAGE_TAG
-          docker push asd2321s2/gitops-express-api:latest
+          docker push asd2321s2/gitops-express-api:v1.0.${{ github.run_number }}
 
-      - name: Update Kustomize Image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/dev/deployment-patch.yaml
-          else
-            sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/dev/deployment-patch.yaml
-          fi
-          git add k8s/overlays/dev/deployment-patch.yaml
-          git commit -m "Update image tag to $IMAGE_TAG"
-          git push origin develop
-
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
       - name: Login to ArgoCD
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
             --username ${{ secrets.ARGOCD_USERNAME }} \
             --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure
+            --grpc-web
 
-      - name: Sync Application with ArgoCD
+      - name: Deploy with ArgoCD
         run: |
           APP_NAME="gitops-express-api-dev"
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             APP_NAME="gitops-express-api-prod"
           fi
+          IMAGE_TAG=${{ github.sha }}
+          argocd app set $APP_NAME --image asd2321s2/gitops-express-api:$IMAGE_TAG
           argocd app sync $APP_NAME
-          argocd app wait $APP_NAME --health
+          argocd app wait $APP_NAME --health --sync
