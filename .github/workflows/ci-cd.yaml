@@ -45,6 +45,7 @@ jobs:
           kubectl apply -f k8s/argocd/rbac/gitops-express-api-sa.yaml
           kubectl apply -f k8s/argocd/rbac/gitops-express-api-cluster-role-binding.yaml
           kubectl apply -f k8s/argocd/rbac/gitops-express-api-cm.yaml
+          kubectl -n argocd rollout restart deployment argocd-server
 
       - name: Generate ArgoCD Auth Token
         id: generate_token
