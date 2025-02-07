@@ -42,8 +42,8 @@ jobs:
 
       - name: Apply Service Account and Role Binding
         run: |
-          kubectl apply -f k8s/argocd/service-account.yaml
-          kubectl apply -f k8s/argocd/cluster-role-binding.yaml
+          kubectl apply -f k8s/argocd/rbac/gitops-express-api-sa.yaml
+          kubectl apply -f k8s/argocd/rbac/gitops-express-api-cluster-role-binding.yaml
 
       - name: Generate ArgoCD Auth Token
         id: generate_token
