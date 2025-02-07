@@ -29,7 +29,6 @@ jobs:
           docker push asd2321s2/gitops-express-api:$IMAGE_TAG
           docker push asd2321s2/gitops-express-api:latest
 
-
       - name: Update Kustomize Image
         run: |
           IMAGE_TAG=${{ github.sha }}
@@ -41,4 +40,3 @@ jobs:
           git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
           git commit -m "Update image tag to $IMAGE_TAG"
           git push origin ${{ github.ref_name }}
-

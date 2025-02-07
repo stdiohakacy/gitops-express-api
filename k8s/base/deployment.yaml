@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gitops-express-api-deployment
+  name: gitops-express-api-depl
   labels:
-    app: gitops-express-api-deployment
+    app: gitops-express-api-depl
   namespace: default
 spec:
   replicas: 1
