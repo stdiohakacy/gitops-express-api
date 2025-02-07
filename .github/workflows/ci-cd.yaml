@@ -42,9 +42,11 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.sha }}
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
-            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG -k k8s/overlays/prod
+            cd k8s/overlays/prod
+            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG
           else
-            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG -k k8s/overlays/dev
+            cd k8s/overlays/dev
+            kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG
           fi
 
       - name: Login to ArgoCD
