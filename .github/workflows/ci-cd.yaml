@@ -40,6 +40,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Apply Service Account and Role Binding
+        run: |
+          kubectl apply -f k8s/argocd/service-account.yaml
+          kubectl apply -f k8s/argocd/cluster-role-binding.yaml
+
+      - name: Generate ArgoCD Auth Token
+        id: generate_token
+        run: |
+          TOKEN=$(kubectl -n argocd create token argocd-admin)
+          echo "::add-mask::$TOKEN"
+          echo "ARGOCD_AUTH_TOKEN=$TOKEN" >> $GITHUB_ENV
+
       - name: Update Kustomize Image Tag
         run: |
           IMAGE_TAG=${{ github.sha }}
@@ -54,9 +66,15 @@ jobs:
       - name: Login to ArgoCD
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
-            --username ${{ secrets.ARGOCD_USERNAME }} \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
             --insecure
+
+      # - name: Login to ArgoCD
+      #   run: |
+      #     argocd login ${{ secrets.ARGOCD_SERVER }} \
+      #       --username ${{ secrets.ARGOCD_USERNAME }} \
+      #       --password ${{ secrets.ARGOCD_PASSWORD }} \
+      #       --insecure
 
       - name: Sync Application with ArgoCD
         run: |
