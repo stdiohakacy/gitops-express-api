@@ -33,10 +33,26 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.sha }}
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+            sed -i '' "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/dev/deployment-patch.yaml
           else
-            sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+            sed -i "s|image: asd2321s2/express-api:.*|image: asd2321s2/express-api:$IMAGE_TAG|" k8s/overlays/dev/deployment-patch.yaml
           fi
-          git add k8s/overlays/${{ github.ref_name }}/deployment-patch.yaml
+          git add k8s/overlays/dev/deployment-patch.yaml
           git commit -m "Update image tag to $IMAGE_TAG"
-          git push origin ${{ github.ref_name }}
+          git push origin develop
+
+      - name: Login to ArgoCD
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} \
+            --username ${{ secrets.ARGOCD_USERNAME }} \
+            --password ${{ secrets.ARGOCD_PASSWORD }} \
+            --insecure
+
+      - name: Sync Application with ArgoCD
+        run: |
+          APP_NAME="gitops-express-api-dev"
+          if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
+            APP_NAME="gitops-express-api-prod"
+          fi
+          argocd app sync $APP_NAME
+          argocd app wait $APP_NAME --health
