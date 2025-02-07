@@ -64,5 +64,6 @@ jobs:
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             APP_NAME="gitops-express-api-prod"
           fi
-          argocd app sync $APP_NAME
-          argocd app wait $APP_NAME --health --sync
+          argocd app sync gitops-express-api-rbac-app
+          # argocd app sync $APP_NAME
+          # argocd app wait $APP_NAME --health --sync
