@@ -64,9 +64,15 @@ jobs:
           set -e
           IMAGE_TAG=${{ github.sha }}
           OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
-
           cd k8s/overlays/$OVERLAY
           kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG
+
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git pull
+          git add kustomization.yaml
+          git commit -m "${{ github.event.inputs.message }} ${{ github.event.inputs.name }} Update image tag to $IMAGE_TAG"
+          git push origin $GITHUB_REF_NAME
 
       - name: Login to ArgoCD
         run: |
@@ -82,22 +88,3 @@ jobs:
 
           argocd app sync $APP_NAME --revision ${{ github.ref_name }}
           argocd app wait $APP_NAME --health --sync
-
-      # - name: Sync Application with ArgoCD
-      #   run: |
-      #     set -e
-      #     APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
-      #     OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
-
-      #     if ! argocd app get $APP_NAME > /dev/null 2>&1; then
-      #       argocd app create $APP_NAME \
-      #         --repo https://github.com/stdiohakacy/gitops-express-api.git \
-      #         --path k8s/overlays/$OVERLAY \
-      #         --dest-server https://kubernetes.default.svc \
-      #         --revision ${{ github.ref_name }} \
-      #         --dest-namespace default \
-      #         --sync-policy automated
-      #     fi
-
-      #     argocd app sync $APP_NAME
-      #     argocd app wait $APP_NAME --health --sync
