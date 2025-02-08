@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: gitops-express-api-depl
   labels:
-    app: gitops-express-api-depl
+    app: gitops-express-api
   namespace: default
 spec:
   replicas: 1

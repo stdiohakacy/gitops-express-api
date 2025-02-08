@@ -86,5 +86,6 @@ jobs:
           set -e
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
 
-          argocd app sync $APP_NAME --revision ${{ github.ref_name }}
+          argocd app sync $APP_NAME --revision ${{ github.ref_name }} || \
+          (echo "Sync failed, rolling back..." && argocd app rollback $APP_NAME --revision <previous_revision>)
           argocd app wait $APP_NAME --health --sync
