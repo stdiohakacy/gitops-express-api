@@ -89,8 +89,8 @@ jobs:
           HISTORY=$(argocd app history $APP_NAME)
           PREV_REVISION=$(echo "$HISTORY" | awk 'NR==3 {print $4}' | sed 's/[()]//g')
 
-          # Sync application
-          if ! argocd app sync $APP_NAME --revision ${{ github.ref_name }}; then
+          # Sync application without the --revision flag
+          if ! argocd app sync $APP_NAME; then
             echo "Sync failed, attempting rollback..."
             if [ -n "$PREV_REVISION" ]; then
               argocd app rollback $APP_NAME --revision $PREV_REVISION
