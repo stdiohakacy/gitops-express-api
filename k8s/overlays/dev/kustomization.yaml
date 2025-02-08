@@ -6,4 +6,4 @@ patchesStrategicMerge:
 - deployment-patch.yaml
 images:
 - name: asd2321s2/gitops-express-api
-  newName: b3d70b45bdcde46e37734c3b252ac866ad6d69e8
+  newName: 8b94cfbd29790c2d6b93b609f5e6083a47ac91b7
