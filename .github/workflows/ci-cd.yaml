@@ -14,6 +14,8 @@ jobs:
   build:
     runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'production' || 'develop' }}
+    outputs:
+      image_tag: ${{ steps.build.outputs.image_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -38,6 +40,11 @@ jobs:
             --tag asd2321s2/gitops-express-api:$VERSION_TAG \
             .
 
+          echo "::set-output name=image_tag::$IMAGE_TAG"
+      - name: Security Scan Docker Image
+        run: |
+          docker scan asd2321s2/gitops-express-api:${{ steps.build.outputs.image_tag }}
+
   deploy:
     needs: build
     runs-on: self-hosted
@@ -45,6 +52,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Validate Kubernetes Manifests
+        run: |
+          OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
+          kubectl kustomize k8s/overlays/$OVERLAY | kubeval
 
       - name: Update Kustomize Image Tag
         run: |
@@ -66,17 +78,25 @@ jobs:
         run: |
           set -e
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
-          OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
 
-          if ! argocd app get $APP_NAME > /dev/null 2>&1; then
-            argocd app create $APP_NAME \
-              --repo https://github.com/stdiohakacy/gitops-express-api.git \
-              --path k8s/overlays/$OVERLAY \
-              --dest-server https://kubernetes.default.svc \
-              --revision ${{ github.ref_name }} \
-              --dest-namespace default \
-              --sync-policy automated
-          fi
-
-          argocd app sync $APP_NAME
+          argocd app sync $APP_NAME --revision ${{ github.ref_name }}
           argocd app wait $APP_NAME --health --sync
+
+      # - name: Sync Application with ArgoCD
+      #   run: |
+      #     set -e
+      #     APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
+      #     OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
+
+      #     if ! argocd app get $APP_NAME > /dev/null 2>&1; then
+      #       argocd app create $APP_NAME \
+      #         --repo https://github.com/stdiohakacy/gitops-express-api.git \
+      #         --path k8s/overlays/$OVERLAY \
+      #         --dest-server https://kubernetes.default.svc \
+      #         --revision ${{ github.ref_name }} \
+      #         --dest-namespace default \
+      #         --sync-policy automated
+      #     fi
+
+      #     argocd app sync $APP_NAME
+      #     argocd app wait $APP_NAME --health --sync
