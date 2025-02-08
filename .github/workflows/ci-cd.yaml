@@ -15,7 +15,7 @@ jobs:
     runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'production' || 'develop' }}
     outputs:
-      image_tag: ${{ steps.build.outputs.image_tag }}
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,6 +30,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and Push Docker Image
+        id: build
         run: |
           set -e
           IMAGE_TAG=${{ github.sha }}
@@ -40,11 +41,14 @@ jobs:
             --tag asd2321s2/gitops-express-api:$VERSION_TAG \
             .
 
-          echo "::set-output name=image_tag::$IMAGE_TAG"
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_ENV
 
-      # - name: Security Scan Docker Image
-      #   run: |
-      #     docker scan asd2321s2/gitops-express-api:${{ steps.build.outputs.image_tag }}
+      - name: Set Image Tag Output
+        id: set_tag
+        run: echo "::set-output name=image_tag::${{ env.image_tag }}"
+
+      - name: Debug Image Tag
+        run: echo "Image tag is ${{ steps.set_tag.outputs.image_tag }}"
 
   deploy:
     needs: build
@@ -54,24 +58,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # - name: Validate Kubernetes Manifests
-      #   run: |
-      #     OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
-      #     kubectl kustomize k8s/overlays/$OVERLAY | kubeval
-
       - name: Update Kustomize Image Tag
         run: |
           set -e
-          IMAGE_TAG=${{ github.sha }}
+          IMAGE_TAG=${{ needs.build.outputs.image_tag }}
           OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
           cd k8s/overlays/$OVERLAY
-          kustomize edit set image asd2321s2/gitops-express-api=$IMAGE_TAG
+          kustomize edit set image asd2321s2/gitops-express-api:$IMAGE_TAG
 
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git pull
           git add kustomization.yaml
-          git commit -m "${{ github.event.inputs.message }} ${{ github.event.inputs.name }} Update image tag to $IMAGE_TAG"
+          git commit -m "Update image tag to $IMAGE_TAG"
           git push origin $GITHUB_REF_NAME
 
       - name: Login to ArgoCD
