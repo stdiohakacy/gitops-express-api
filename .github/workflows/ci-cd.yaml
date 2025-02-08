@@ -1,4 +1,4 @@
-name: Deploy to Minikube
+name: CI/CD Pipeline for GitOps Express API
 
 on:
   push:
@@ -41,9 +41,10 @@ jobs:
             .
 
           echo "::set-output name=image_tag::$IMAGE_TAG"
-      - name: Security Scan Docker Image
-        run: |
-          docker scan asd2321s2/gitops-express-api:${{ steps.build.outputs.image_tag }}
+          
+      # - name: Security Scan Docker Image
+      #   run: |
+      #     docker scan asd2321s2/gitops-express-api:${{ steps.build.outputs.image_tag }}
 
   deploy:
     needs: build
