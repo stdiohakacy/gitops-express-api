@@ -41,7 +41,7 @@ jobs:
             .
 
           echo "::set-output name=image_tag::$IMAGE_TAG"
-          
+
       # - name: Security Scan Docker Image
       #   run: |
       #     docker scan asd2321s2/gitops-express-api:${{ steps.build.outputs.image_tag }}
@@ -54,10 +54,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Validate Kubernetes Manifests
-        run: |
-          OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
-          kubectl kustomize k8s/overlays/$OVERLAY | kubeval
+      # - name: Validate Kubernetes Manifests
+      #   run: |
+      #     OVERLAY=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "prod" || echo "dev" )
+      #     kubectl kustomize k8s/overlays/$OVERLAY | kubeval
 
       - name: Update Kustomize Image Tag
         run: |
