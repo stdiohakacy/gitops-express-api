@@ -93,4 +93,4 @@ jobs:
       - name: Wait for Application Sync to Complete
         run: |
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
-          argocd app wait $APP_NAME --sync-status Synced --health Healthy --timeout 300
+          argocd app wait $APP_NAME --operation --health Healthy --timeout 300
