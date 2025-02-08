@@ -1,6 +1,9 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../base
+- ../../base
 patchesStrategicMerge:
-  - deployment-patch.yaml
+- deployment-patch.yaml
+images:
+- name: asd2321s2/gitops-express-api
+  newName: 616ecd0f9ec37eeb61a4ce4a461138c9d918cf25
