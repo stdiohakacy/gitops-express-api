@@ -85,22 +85,4 @@ jobs:
         run: |
           set -e
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
-
-          HISTORY=$(argocd app history $APP_NAME)
-          PREV_REVISION=$(echo "$HISTORY" | awk 'NR==3 {print $4}' | sed 's/[()]//g')
-
-          # Sync application without the --revision flag
-          if ! argocd app sync $APP_NAME; then
-            echo "Sync failed, attempting rollback..."
-            if [ -n "$PREV_REVISION" ]; then
-              argocd app rollback $APP_NAME --revision $PREV_REVISION
-            else
-              echo "No previous revision to roll back to."
-            fi
-          fi
-
-          # Wait with a timeout of 5 minutes
-          if ! argocd app wait $APP_NAME --health --sync --timeout 300; then
-            echo "Timeout waiting for the application to become healthy."
-            exit 1
-          fi
+          argocd app sync $APP_NAME
