@@ -85,7 +85,7 @@ jobs:
         run: |
           set -e
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
-
+          PREV_REVISION=$(argocd app history $APP_NAME -o json | jq -r '.[1].id')
           argocd app sync $APP_NAME --revision ${{ github.ref_name }} || \
-          (echo "Sync failed, rolling back..." && argocd app rollback $APP_NAME --revision <previous_revision>)
+          (echo "Sync failed, rolling back..." && argocd app rollback $APP_NAME --revision $PREV_REVISION)
           argocd app wait $APP_NAME --health --sync
