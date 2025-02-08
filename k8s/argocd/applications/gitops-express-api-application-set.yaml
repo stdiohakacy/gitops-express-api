@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: gitops-express-api-set
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            branch: develop
+            namespace: default
+          - env: prod
+            branch: main
+            namespace: production
+  template:
+    metadata:
+      name: 'gitops-express-api-{{env}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/stdiohakacy/gitops-express-api.git
+        targetRevision: '{{branch}}'
+        path: 'k8s/overlays/{{env}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

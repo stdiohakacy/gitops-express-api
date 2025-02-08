@@ -75,13 +75,22 @@ jobs:
 
       - name: Login to ArgoCD
         run: |
-          argocd login ${{ secrets.ARGOCD_SERVER }} \
-            --username ${{ secrets.ARGOCD_USERNAME }} \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --insecure
+          if ! argocd account get-user-info &>/dev/null; then
+            argocd login ${{ secrets.ARGOCD_SERVER }} \
+              --username ${{ secrets.ARGOCD_USERNAME }} \
+              --password ${{ secrets.ARGOCD_PASSWORD }} \
+              --insecure
+          else
+            echo "Already logged into ArgoCD"
+          fi
 
       - name: Sync Application with ArgoCD
         run: |
           set -e
           APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
           argocd app sync $APP_NAME
+
+      - name: Wait for Application Sync to Complete
+        run: |
+          APP_NAME=$( [[ $GITHUB_REF == 'refs/heads/main' ]] && echo "gitops-express-api-prod" || echo "gitops-express-api-dev" )
+          argocd app wait $APP_NAME --sync-status Synced --health Healthy --timeout 300
