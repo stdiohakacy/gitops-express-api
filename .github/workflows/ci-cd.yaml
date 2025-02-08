@@ -40,20 +40,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Apply Service Account and Role Binding
-        run: |
-          kubectl apply -f k8s/argocd/rbac/gitops-express-api-sa.yaml
-          kubectl apply -f k8s/argocd/rbac/gitops-express-api-cluster-role-binding.yaml
-          kubectl apply -f k8s/argocd/rbac/gitops-express-api-cm.yaml
-          kubectl -n argocd rollout restart deployment argocd-server
-
-      - name: Generate ArgoCD Auth Token
-        id: generate_token
-        run: |
-          TOKEN=$(kubectl -n argocd create token argocd-admin)
-          echo "::add-mask::$TOKEN"
-          echo "ARGOCD_AUTH_TOKEN=$TOKEN" >> $GITHUB_ENV
-
       - name: Update Kustomize Image Tag
         run: |
           IMAGE_TAG=${{ github.sha }}
@@ -69,23 +55,23 @@ jobs:
         run: |
           argocd login ${{ secrets.ARGOCD_SERVER }} \
             --username ${{ secrets.ARGOCD_USERNAME }} \
-            --password ${{ secrets.ARGOCD_PASSWORD }} \
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
-            --insecure
-
-      # - name: Login to ArgoCD
-      #   run: |
-      #     argocd login ${{ secrets.ARGOCD_SERVER }} \
-      #       --username ${{ secrets.ARGOCD_USERNAME }} \
-      #       --password ${{ secrets.ARGOCD_PASSWORD }} \
-      #       --insecure
+            --password ${{ secrets.ARGOCD_PASSWORD }}
 
       - name: Sync Application with ArgoCD
         run: |
+          kubectl config set-context --current --namespace=argocd
           APP_NAME="gitops-express-api-dev"
           if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             APP_NAME="gitops-express-api-prod"
           fi
-          argocd app sync gitops-express-api-rbac-app
-          # argocd app sync $APP_NAME
-          # argocd app wait $APP_NAME --health --sync
+
+          argocd app create gitops-express-api-dev \
+            --repo https://github.com/stdiohakacy/gitops-express-api.git \
+            --path k8s/overlays/dev \
+            --dest-server https://kubernetes.default.svc \
+            --revision develop \
+            --dest-namespace default \
+            --sync-policy automated \
+
+          argocd app sync $APP_NAME
+          argocd app wait $APP_NAME --health --sync
